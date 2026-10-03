@@ -1,0 +1,31 @@
+/* Admin Auth Shared Styles — mirrors User auth.css exactly */
+/* Reuses the same class names so admin login/register get identical styling */
+
+/* 
+  All core auth classes (auth-page, auth-container, auth-card, auth-header, 
+  auth-logo, form-group, input-wrapper, etc.) come from User/auth.css 
+  and global index.css. This file only adds admin-specific accent overrides.
+*/
+
+/* Admin role badge shown below logo */
+.admin-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  color: var(--primary);
+  padding: 0.3rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 1rem;
+  animation: fade-in 0.5s ease;
+}
+
+.admin-role-badge svg {
+  width: 14px;
+  height: 14px;
+}

@@ -120,38 +120,65 @@ function Profile() {
         });
         setLoading(false);
 
-        // Retrieve habits unique to user
+        // Retrieve habits unique to user (prefer MongoDB habits)
+        const dbHabits = response.data.user.habits;
         const userEmail = response.data.user.email;
-        const storedHabits = localStorage.getItem(`habits_${userEmail}`);
-        if (storedHabits) {
-          setHabits(JSON.parse(storedHabits));
+        if (dbHabits && dbHabits.length > 0) {
+          const mapped = dbHabits.map(h => ({
+            ...h,
+            id: h.id || h._id,
+            done: h.completed !== undefined ? h.completed : !!h.done
+          }));
+          setHabits(mapped);
+          localStorage.setItem(`habits_${userEmail}`, JSON.stringify(mapped));
         } else {
-          // Pre-populate with default routines
-          const defaultHabits = [
-            { id: 1, name: "Drink 3L of Water", done: false, streak: 5, category: "health" },
-            { id: 2, name: "Gym Workout Routine", done: false, streak: 3, category: "fitness" },
-            { id: 3, name: "Read 10 Pages of Book", done: false, streak: 8, category: "mind" },
-            { id: 4, name: "Write Clean React Code", done: false, streak: 12, category: "work" }
-          ];
-          setHabits(defaultHabits);
-          localStorage.setItem(`habits_${userEmail}`, JSON.stringify(defaultHabits));
+          const storedHabits = localStorage.getItem(`habits_${userEmail}`);
+          if (storedHabits) {
+            setHabits(JSON.parse(storedHabits));
+          } else {
+            const defaultHabits = [
+              { id: "h_1", name: "Drink 3L of Water", done: false, streak: 5, category: "health" },
+              { id: "h_2", name: "Gym Workout Routine", done: false, streak: 3, category: "fitness" },
+              { id: "h_3", name: "Read 10 Pages of Book", done: false, streak: 8, category: "mind" },
+              { id: "h_4", name: "Write Clean React Code", done: false, streak: 12, category: "work" }
+            ];
+            setHabits(defaultHabits);
+            localStorage.setItem(`habits_${userEmail}`, JSON.stringify(defaultHabits));
+          }
         }
       } catch (error) {
         console.error("Session fetch failed:", error);
-        alert("Session expired. Please log in again.");
         localStorage.removeItem("token");
-        navigate("/login");
+        navigate("/login", { replace: true });
       }
     };
 
     getProfile();
   }, [navigate]);
 
-  // Sync state to local storage
-  const saveHabits = (updatedHabits) => {
+  // Sync state to local storage and MongoDB backend
+  const saveHabits = async (updatedHabits) => {
     setHabits(updatedHabits);
     if (user.email) {
       localStorage.setItem(`habits_${user.email}`, JSON.stringify(updatedHabits));
+    }
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payloadHabits = updatedHabits.map(h => ({
+          id: String(h.id),
+          name: h.name,
+          category: h.category || "health",
+          completed: !!h.done,
+          streak: h.streak || 0,
+          flagged: !!h.flagged
+        }));
+        await axios.put("http://localhost:3000/User/habits", { habits: payloadHabits }, {
+          headers: { authorization: token }
+        });
+      } catch (err) {
+        console.warn("Failed to sync habits with backend:", err);
+      }
     }
   };
 
@@ -478,7 +505,7 @@ function Profile() {
   // Logout handler
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/");
+    navigate("/home");
   };
 
   // Metrics calculators

@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 
 const User = require('../Model/model')
 const authmiddleware = require("../middleware/authMiddleware");
-
 const router = express.Router();
 
 // REGISTER
@@ -22,17 +21,27 @@ router.post("/register", async (req, res) => {
       const saltRounds = 10
       const hashedPassword= await bcrypt.hash(password,saltRounds)
 
+    const defaultHabits = [
+      { id: "h_" + Date.now() + "_1", name: "Drink 3L of Water", category: "health", completed: true, streak: 5 },
+      { id: "h_" + Date.now() + "_2", name: "Gym Workout Routine", category: "fitness", completed: false, streak: 3 },
+      { id: "h_" + Date.now() + "_3", name: "Read 10 Pages of Book", category: "mind", completed: true, streak: 8 },
+      { id: "h_" + Date.now() + "_4", name: "Write Clean React Code", category: "work", completed: false, streak: 12 }
+    ];
+
     const newUser = new User({
-    userName,
-    age,
-    email,
-    password: hashedPassword});
+      userName,
+      age,
+      email,
+      password: hashedPassword,
+      status: "active",
+      habits: defaultHabits
+    });
 
    await newUser.save();
 
   res.status(201).json({message: "Registration successfull", newUser})
 }catch(error){
-  res.status(400).json({message: "Error in Registration", newUser})
+  res.status(400).json({message: "Error in Registration", error: error.message})
 }
 })
 
@@ -55,12 +64,13 @@ router.post("/login", async (req, res) => {
       message: "Invalid Password",
     });
   }
+   
 
   // JWT Token Generation
   const token = jwt.sign(
     {
       id: user._id,
-      email: user.email,
+      email: user.email
     },
     "secretkey",
     {
@@ -131,6 +141,22 @@ router.put("/profile", authmiddleware, async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ message: "Error in updating profile", error: error.message });
+  }
+});
+
+// UPDATE USER HABITS
+router.put("/habits", authmiddleware, async (req, res) => {
+  try {
+    const { habits } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    user.habits = habits;
+    await user.save();
+    res.json({ message: "Habits updated successfully", habits: user.habits });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating habits", error: error.message });
   }
 });
 

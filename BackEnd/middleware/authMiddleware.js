@@ -12,7 +12,7 @@ const authMiddleware = (req, res, next) => {
   try {
     const verified = jwt.verify(token, "secretkey");
 
-    req.user = verified;
+    req.user= verified;
 
     next();
   } catch (error) {

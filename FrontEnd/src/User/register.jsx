@@ -63,12 +63,10 @@ function Register() {
           values
         );
 
-        // Alert user of success and redirect to login
-        alert(response.data.message || "Registration successful!");
         navigate("/login");
         
-      } catch (error) {
-        console.error(error);
+      } catch(error) {
+        console.log(error);
         setServerError(
           error.response?.data?.message || 
           "Failed to create account. Please check your credentials and try again."
